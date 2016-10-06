@@ -61,9 +61,9 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="DIFFICULTY INDEX"
         android:id="@+id/textView3"
-        android:layout_above="@+id/textView2"
+        android:layout_below="@+id/meaning_word"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="78dp" />
+        android:layout_marginTop="42dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -72,5 +72,5 @@
         android:text="Medium Text"
         android:id="@+id/defindex"
         android:layout_alignTop="@+id/textView3"
-        android:layout_alignParentEnd="true" />
+        android:layout_toEndOf="@+id/meaning_word" />
 </RelativeLayout>
