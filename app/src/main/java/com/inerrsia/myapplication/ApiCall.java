@@ -21,7 +21,7 @@ public class ApiCall {
                 .build();
         Response response = client.newCall(request).execute();
         return response.body().string();
-
+    }
     //POST network request
     public static String POST(OkHttpClient client, byte[] rbody) throws IOException {
         RequestBody DATA = RequestBody.create(JSON, rbody);

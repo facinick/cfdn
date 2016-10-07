@@ -1,12 +1,15 @@
 package com.inerrsia.myapplication;
+import android.Manifest;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.support.v4.app.Fragment;
@@ -24,7 +27,10 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -33,11 +39,18 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import okhttp3.OkHttpClient;
+import okio.Timeout;
+
 public class MainActivity extends AppCompatActivity
 {
+
+    public static String x_cod, y_cod;
     static byte[] imgdata;
     static String JSON_DATA;
+
     public static final int MEDIA_TYPE_IMAGE = 1;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int REQUEST_TAKE_PHOTO = 1;
@@ -45,12 +58,14 @@ public class MainActivity extends AppCompatActivity
     private SectionsPagerAdapter mSectionsPagerAdapter;
     static private ViewPager mViewPager;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+
+       // Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+     //   setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -68,14 +83,12 @@ public class MainActivity extends AppCompatActivity
         // cuz 0 1 2.
         mViewPager.setCurrentItem(1);
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -143,6 +156,18 @@ public class MainActivity extends AppCompatActivity
             public void onPictureTaken(byte[] data, Camera camera) {
 
                 imgdata = data;
+                byte[] image = data;
+                Bitmap bitmap = BitmapFactory.decodeByteArray(image , 0, image.length);
+                ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 20, bStream);
+                //BitmapFactory
+
+                byte[] mByteArray = bStream.toByteArray();
+                imgdata=mByteArray;
+
+
+
+
                 Log.e("XXXXXXXXXXXXXXXXXXX", "BYTE DATA SET");
 
                 Thread thread = new Thread(new Runnable() {
@@ -152,7 +177,12 @@ public class MainActivity extends AppCompatActivity
                             String response = "";
                             Log.e("XXXXXXXXXXXXXXXXXXX", "API call started");
                             try {
-                                response = ApiCall.POST(new OkHttpClient(), imgdata);
+                                OkHttpClient client = new OkHttpClient.Builder()
+                                        .connectTimeout(300, TimeUnit.SECONDS)
+                                        .readTimeout(300, TimeUnit.SECONDS)
+                                        .writeTimeout(300, TimeUnit.SECONDS)
+                                        .build();
+                                response = ApiCall.POST(client, imgdata);
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 Log.e("ERROR CALING API", "ERROR");
@@ -175,14 +205,22 @@ public class MainActivity extends AppCompatActivity
                     Log.e("XXXXXXXXXXXXXXXXXXX", "ERROR IN THREAD JOIN");
                 }
                 Log.e("XXXXXXXXXXXXXXXXXXX", "SHIFTING SCREEN");
+
+
                 Intent fuck = new Intent(getContext(), fuck.class);
                 fuck.putExtra("json", JSON_DATA);
+
+
+
+                fuck.putExtra("codx", x_cod);
+                fuck.putExtra("cody", y_cod);
                 startActivity(fuck);
                 try {
                     thread.join();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
                 try {
                     File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
                     if (pictureFile == null) {
@@ -190,8 +228,11 @@ public class MainActivity extends AppCompatActivity
                     }
                     try {
                         FileOutputStream fos = new FileOutputStream(pictureFile);
-                        fos.write(data);
+                        FileOutputStream fosy = new FileOutputStream(pictureFile);
+                        fos.write(mByteArray);
+                        fosy.write(data);
                         fos.close();
+                        fosy.close();
                         Log.e("XXXXXXXXXXXXXXXXXXX", "DATA WRITTEN");
                     } catch (FileNotFoundException e) {
                         Log.d("TAG", "File not found: " + e.getMessage());
@@ -304,7 +345,11 @@ public class MainActivity extends AppCompatActivity
                                 Log.e("DX", Float.toString(dx));
                                 Log.e("Dy", Float.toString(dy));
                                 if (clickDuration < MAX_CLICK_DURATION && dx < MAX_CLICK_DISTANCE && dy < MAX_CLICK_DISTANCE) {
-                                    Toast.makeText(getContext(), "FOCUSING, CHILL!", Toast.LENGTH_SHORT).show();
+                                    x_cod = Double.toString(x1);
+                                    y_cod = Double.toString(y1);
+                                    Log.e(Double.toString(x1),Double.toString(y1));
+                                    Log.e(Double.toString(x2),Double.toString(y2));
+                                    Toast.makeText(getContext(), "Processing ", Toast.LENGTH_SHORT).show();
                                     focusOnTouch(motionEvent);
                                     mCamera.takePicture(null, null, mPicture);
                                 } else {
@@ -371,8 +416,7 @@ public class MainActivity extends AppCompatActivity
 //                    Log.e("XXXXXXXXXXXXXXXXXXX", "NULL JSON");
 //                    TextView SEXYTEXT = (TextView) rootView.findViewById(R.id.SEXYTEXT);
 //                    SEXYTEXT.setVisibility(rootView.VISIBLE);
-                //}
-
+                //
                 return rootView;
             }
         }

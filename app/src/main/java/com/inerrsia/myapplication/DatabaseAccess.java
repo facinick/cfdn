@@ -80,14 +80,14 @@ public class DatabaseAccess {
     {
         try
         {
-            Cursor cursor = this.database.rawQuery("SELECT * From Words WHERE `Word` = '"+m+"'", null);
+            Cursor cursor = this.database.rawQuery("SELECT * From Words WHERE `Word` = '"+m.toLowerCase()+"'", null);
             cursor.moveToFirst();
             int pos = cursor.getColumnIndex("Meaning");
             String val = cursor.getString(pos);
-            if (val == null)
+            if (val == null || val.length() < 3)
                 return "null";
             else
-                return cursor.getString(pos);
+                return val;
         }
         catch( Exception e)
         {
